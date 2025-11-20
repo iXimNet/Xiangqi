@@ -1,0 +1,5 @@
+{
+  "name": "Master Xiangqi (Chinese Chess)",
+  "description": "A premium Chinese Chess application featuring PvP support, game history tracking, persistent sessions, and AI-powered game analysis.",
+  "requestFramePermissions": []
+}
