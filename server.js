@@ -7,8 +7,34 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 
-const DB_PATH = path.join(process.cwd(), 'xiangqi.db');
-const db = new Database(DB_PATH);
+const DATA_DIR = process.env.DATA_DIR || process.cwd();
+const DB_PATH = path.join(DATA_DIR, 'xiangqi.db');
+let db;
+try {
+  db = new Database(DB_PATH);
+} catch (e) {
+  console.error('打开数据库失败，尝试备份并重建', e);
+  try {
+    const corruptName = `xiangqi.db.corrupt.${Date.now()}`;
+    try { await fs.promises.rename(DB_PATH, path.join(DATA_DIR, corruptName)); } catch {}
+    db = new Database(DB_PATH);
+  } catch (e2) {
+    console.error('数据库重建再次失败', e2);
+    process.exit(1);
+  }
+}
+
+if (process.env.CHECK_DB_INTEGRITY === '1') {
+  try {
+    const row = db.prepare('PRAGMA integrity_check').get();
+    const val = row && Object.values(row)[0];
+    if (val !== 'ok') {
+      console.warn('数据库完整性检查未通过:', val);
+    }
+  } catch (e) {
+    console.warn('执行完整性检查时出错', e);
+  }
+}
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS games (
@@ -95,6 +121,10 @@ app.get('/api/games/:id', (req, res) => {
     return;
   }
   res.json({ game: mapRowToGame(row) });
+});
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', pid: process.pid, time: Date.now() });
 });
 
 app.post('/api/games', (req, res) => {
