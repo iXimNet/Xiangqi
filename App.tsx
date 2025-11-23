@@ -29,12 +29,23 @@ const Header: React.FC<HeaderProps> = ({ view, setView, stats, isFinished }) => 
       </div>
     </div>
 
-    <div className="hidden md:flex gap-4 text-xs">
-      <div className="text-gray-400">总局数: <span className="text-white">{stats.gamesPlayed}</span></div>
-      <div className="text-red-400">红胜: <span className="text-white">{stats.redWins}</span></div>
-      <div className="text-gray-300">黑胜: <span className="text-white">{stats.blackWins}</span></div>
-      <div className="text-xs text-gray-400">
-        红:{stats.redWins} | 黑:{stats.blackWins} | 和:{stats.draws}
+    <div className="hidden md:flex items-center gap-3 text-xs bg-[#1e1c1a]/50 px-4 py-2 rounded-lg border border-[#4a3b32]/50">
+      <div className="flex items-center gap-1.5">
+        <span className="text-gray-500">总局</span>
+        <span className="text-amber-400 font-semibold">{stats.gamesPlayed}</span>
+      </div>
+      <div className="w-px h-4 bg-[#4a3b32]"></div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-red-400">红</span>
+        <span className="text-white font-semibold">{stats.redWins}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-gray-400">黑</span>
+        <span className="text-white font-semibold">{stats.blackWins}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <span className="text-gray-500">和</span>
+        <span className="text-white font-semibold">{stats.draws}</span>
       </div>
     </div>
     <div className="flex items-center gap-2">
@@ -291,26 +302,58 @@ const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
 
         {/* Playback Controls Bar */}
-        <div className="w-full p-4 bg-[#262422] border-t border-[#4a3b32] flex justify-center items-center gap-6 shrink-0 z-20 safe-pb">
-          <button onClick={() => jumpToStep(0)} className="text-gray-400 hover:text-white active:scale-90 transition">
-            ⏮ <span className="hidden md:inline text-xs">开始</span>
-          </button>
-          <button onClick={() => jumpToStep(historyStep - 1)} className="p-3 bg-gray-800 rounded-full hover:bg-gray-700 active:scale-95 transition border border-gray-600">
-            ◀
-          </button>
-          <button
-            onClick={togglePlayback}
-            className="w-14 h-14 bg-amber-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-amber-500 active:scale-95 transition border-4 border-[#262422] -mt-8"
-          >
-            <span className="text-xl ml-0.5">{isPlayingHistory ? '⏸' : '▶'}</span>
-          </button>
-          <button onClick={() => jumpToStep(historyStep + 1)} className="p-3 bg-gray-800 rounded-full hover:bg-gray-700 active:scale-95 transition border border-gray-600">
-            ▶
-          </button>
-          <button onClick={() => activeReplaySession && jumpToStep(activeReplaySession.moves.length)} className="text-gray-400 hover:text-white active:scale-90 transition">
-            <span className="hidden md:inline text-xs">最新</span> ⏭
-          </button>
-        </div>
+        {/* Playback Controls Bar */}
+        {(() => {
+          const atStart = historyStep === 0;
+          const atEnd = activeReplaySession ? historyStep >= activeReplaySession.moves.length : true;
+          return (
+            <div className="w-full px-6 py-3 bg-[#262422] border-t border-[#4a3b32] flex justify-center items-center shrink-0 z-20 safe-pb">
+              <div className="flex items-center gap-4 md:gap-6">
+                {/* Jump to Start */}
+                <button
+                  onClick={() => jumpToStep(0)}
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm md:text-base bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white transition active:scale-95 ${atStart ? 'opacity-40 pointer-events-none' : 'text-gray-300'}`}
+                  aria-label="跳到开始"
+                >
+                  ⏮
+                </button>
+                {/* Prev */}
+                <button
+                  onClick={() => jumpToStep(historyStep - 1)}
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-lg bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 transition active:scale-95 ${atStart ? 'opacity-40 pointer-events-none' : ''}`}
+                  aria-label="上一手"
+                >
+                  ◀
+                </button>
+                {/* Play / Pause */}
+                <button
+                  onClick={togglePlayback}
+                  className={`w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-2xl font-semibold transition active:scale-95 shadow-lg ring-2 ring-black/30 ${isPlayingHistory ? 'bg-amber-700 hover:bg-amber-600 text-white' : 'bg-amber-600 hover:bg-amber-500 text-white'}`}
+                  aria-label={isPlayingHistory ? '暂停播放' : '开始播放'}
+                >
+                  {isPlayingHistory ? '⏸' : '▶'}
+                </button>
+                {/* Next */}
+                <button
+                  onClick={() => jumpToStep(historyStep + 1)}
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-lg bg-gray-800 border border-gray-600 hover:bg-gray-700 text-gray-200 transition active:scale-95 ${atEnd ? 'opacity-40 pointer-events-none' : ''}`}
+                  aria-label="下一手"
+                >
+                  ▶
+                </button>
+                {/* Jump to End */}
+                <button
+                  onClick={() => activeReplaySession && jumpToStep(activeReplaySession.moves.length)}
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center text-sm md:text-base bg-gray-800 border border-gray-600 hover:bg-gray-700 hover:text-white transition active:scale-95 ${atEnd ? 'opacity-40 pointer-events-none' : 'text-gray-300'}`}
+                  aria-label="跳到最新"
+                >
+                  ⏭
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+        
       </div>
 
       {/* Right: Move List (Desktop only usually, or collapsible) */}

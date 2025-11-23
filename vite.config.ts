@@ -5,6 +5,8 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      // 允许通过环境变量 VITE_BASE_PATH 指定部署子路径 (例如 /xiangqi/)
+      base: env.VITE_BASE_PATH || '/',
       server: {
         port: 3000,
         host: '0.0.0.0',
