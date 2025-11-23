@@ -36,21 +36,21 @@ export const reconstructBoard = (moves: Move[]): Piece[] => {
 };
 
 export const isGeneralFacingGeneral = (pieces: Piece[]): boolean => {
-    const redGen = pieces.find(p => p.type === PieceType.GENERAL && p.color === PlayerColor.RED);
-    const blackGen = pieces.find(p => p.type === PieceType.GENERAL && p.color === PlayerColor.BLACK);
+  const redGen = pieces.find(p => p.type === PieceType.GENERAL && p.color === PlayerColor.RED);
+  const blackGen = pieces.find(p => p.type === PieceType.GENERAL && p.color === PlayerColor.BLACK);
 
-    if (!redGen || !blackGen) return false;
-    if (redGen.position.x !== blackGen.position.x) return false;
+  if (!redGen || !blackGen) return false;
+  if (redGen.position.x !== blackGen.position.x) return false;
 
-    // Check if there are pieces between them
-    const col = redGen.position.x;
-    const minY = Math.min(redGen.position.y, blackGen.position.y);
-    const maxY = Math.max(redGen.position.y, blackGen.position.y);
+  // Check if there are pieces between them
+  const col = redGen.position.x;
+  const minY = Math.min(redGen.position.y, blackGen.position.y);
+  const maxY = Math.max(redGen.position.y, blackGen.position.y);
 
-    for (let y = minY + 1; y < maxY; y++) {
-        if (getPieceAt(pieces, { x: col, y })) return false;
-    }
-    return true;
+  for (let y = minY + 1; y < maxY; y++) {
+    if (getPieceAt(pieces, { x: col, y })) return false;
+  }
+  return true;
 };
 
 // Check if move is valid based on piece rules
@@ -132,10 +132,10 @@ export const getValidMoves = (piece: Piece, allPieces: Piece[]): Position[] => {
           const tx = x + dx * i;
           const ty = y + dy * i;
           if (!tryAddMove(tx, ty)) {
-             break;
+            break;
           }
           const target = getPieceAt(allPieces, { x: tx, y: ty });
-          if (target) break; 
+          if (target) break;
           i++;
         }
       });
@@ -148,10 +148,10 @@ export const getValidMoves = (piece: Piece, allPieces: Piece[]): Position[] => {
         while (true) {
           const tx = x + dx * i;
           const ty = y + dy * i;
-          if (!isWithinBoard({x: tx, y: ty})) break;
+          if (!isWithinBoard({ x: tx, y: ty })) break;
 
           const target = getPieceAt(allPieces, { x: tx, y: ty });
-          
+
           if (!hasMount) {
             if (!target) {
               moves.push({ x: tx, y: ty });
@@ -175,7 +175,7 @@ export const getValidMoves = (piece: Piece, allPieces: Piece[]): Position[] => {
       const forward = isRed ? -1 : 1;
       // Forward
       tryAddMove(x, y + forward);
-      
+
       // Horizontal if crossed river
       const crossedRiver = isRed ? y <= 4 : y >= 5;
       if (crossedRiver) {
@@ -188,15 +188,15 @@ export const getValidMoves = (piece: Piece, allPieces: Piece[]): Position[] => {
   // Filter out moves that violate "Flying General" rule
   // (Kings cannot face each other directly without a piece in between)
   return moves.filter(movePos => {
-      // Simulate move
-      const simulatedPieces = allPieces.map(p => {
-          if (p.id === piece.id) return { ...p, position: movePos };
-          // If target position has a piece, it gets captured (removed)
-          if (p.position.x === movePos.x && p.position.y === movePos.y) return null; 
-          return p;
-      }).filter(p => p !== null) as Piece[];
+    // Simulate move
+    const simulatedPieces = allPieces.map(p => {
+      if (p.id === piece.id) return { ...p, position: movePos };
+      // If target position has a piece, it gets captured (removed)
+      if (p.position.x === movePos.x && p.position.y === movePos.y) return null;
+      return p;
+    }).filter(p => p !== null) as Piece[];
 
-      return !isGeneralFacingGeneral(simulatedPieces);
+    return !isGeneralFacingGeneral(simulatedPieces);
   });
 };
 

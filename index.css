@@ -1,0 +1,25 @@
+.animate-bounce-in-out {
+  animation: bounce-in-out 1.5s ease-in-out forwards;
+}
+
+@keyframes bounce-in-out {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  40% {
+    transform: scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}

@@ -12,9 +12,10 @@ interface BoardProps {
   lastMove: Move | null;
   canMove: boolean;
   isFlipped: boolean;
+  slowMotionPieceId?: string | null;
 }
 
-const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMove, canMove, isFlipped }) => {
+const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMove, canMove, isFlipped, slowMotionPieceId }) => {
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
   const [validMoves, setValidMoves] = useState<Position[]>([]);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -22,7 +23,7 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
     x: isFlipped ? (8 - pos.x) : pos.x,
     y: isFlipped ? (9 - pos.y) : pos.y,
   });
-  
+
   // Clear selection if turn changes
   useEffect(() => {
     setSelectedPieceId(null);
@@ -39,7 +40,7 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
       }
       return;
     }
-    
+
     // If clicking the currently selected piece, deselect it
     if (selectedPieceId === piece.id) {
       setSelectedPieceId(null);
@@ -55,16 +56,16 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
   const handleTargetInteraction = (targetPos: Position) => {
     if (!canMove) return;
     if (!selectedPieceId) return;
-    
+
     const piece = pieces.find(p => p.id === selectedPieceId);
     if (!piece) return;
 
     // Check if the target position is a valid move for the selected piece
     const isValid = validMoves.some(m => m.x === targetPos.x && m.y === targetPos.y);
-    
+
     if (isValid) {
       const targetPiece = pieces.find(p => p.position.x === targetPos.x && p.position.y === targetPos.y);
-      
+
       const move: Move = {
         pieceId: piece.id,
         from: piece.position,
@@ -73,7 +74,7 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
         timestamp: Date.now(),
         notation: `${piece.color === PlayerColor.RED ? '红' : '黑'}${piece.type} (${piece.position.x},${piece.position.y})->(${targetPos.x},${targetPos.y})`
       };
-      
+
       // Optimistic cleanup BEFORE calling onMove
       setSelectedPieceId(null);
       setValidMoves([]);
@@ -83,7 +84,7 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
 
       // Check for General kill (Win condition)
       if (targetPiece && targetPiece.type === 'general') {
-         setTimeout(() => onGameOver(piece.color), 200);
+        setTimeout(() => onGameOver(piece.color), 200);
       }
 
     }
@@ -93,7 +94,7 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
   // SVG Grid Generation
   const renderGrid = () => {
     const lines = [];
-    
+
     // Horizontal lines
     for (let i = 0; i < 10; i++) {
       lines.push(
@@ -120,7 +121,7 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
   };
 
   return (
-    <div 
+    <div
       ref={boardRef}
       className={`relative w-full max-w-[500px] aspect-[9/10] bg-wood-light mx-auto shadow-2xl rounded-sm border-4 border-[#8b5a2b] select-none touch-none ${!canMove ? 'opacity-90' : ''}`}
       // Disable context menu to prevent accidental long-press behavior
@@ -130,8 +131,26 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
       <svg className="absolute inset-0 w-full h-full z-0 pointer-events-none">
         {renderGrid()}
         {/* River Text */}
-        <text x="25%" y="51.5%" dominantBaseline="middle" textAnchor="middle" fill="#8b5a2b" className="text-2xl font-serif opacity-60 select-none">楚 河</text>
-        <text x="75%" y="51.5%" dominantBaseline="middle" textAnchor="middle" fill="#8b5a2b" className="text-2xl font-serif opacity-60 select-none">汉 界</text>
+        {/* River Text */}
+        {/* 
+            Using <g> with transform for robust rotation around specific points.
+            The board is 9x10.
+            River center Y is 50% (between row 4 and 5).
+            X positions: 20%, 30%, 70%, 80%.
+            We translate to the position, then rotate.
+        */}
+        <g style={{ transform: `translate(${isFlipped ? '80%' : '20%'}, 50.3%) rotate(${isFlipped ? 90 : -90}deg)` }}>
+          <text dominantBaseline="middle" textAnchor="middle" fill="#8b5a2b" className="text-2xl font-serif opacity-60 select-none">楚</text>
+        </g>
+        <g style={{ transform: `translate(${isFlipped ? '70%' : '30%'}, 50.3%) rotate(${isFlipped ? 90 : -90}deg)` }}>
+          <text dominantBaseline="middle" textAnchor="middle" fill="#8b5a2b" className="text-2xl font-serif opacity-60 select-none">河</text>
+        </g>
+        <g style={{ transform: `translate(${isFlipped ? '30%' : '70%'}, 50.3%) rotate(${isFlipped ? -90 : 90}deg)` }}>
+          <text dominantBaseline="middle" textAnchor="middle" fill="#8b5a2b" className="text-2xl font-serif opacity-60 select-none">界</text>
+        </g>
+        <g style={{ transform: `translate(${isFlipped ? '20%' : '80%'}, 50.3%) rotate(${isFlipped ? -90 : 90}deg)` }}>
+          <text dominantBaseline="middle" textAnchor="middle" fill="#8b5a2b" className="text-2xl font-serif opacity-60 select-none">汉</text>
+        </g>
       </svg>
 
       {/* Move Indicators Layer (Z-30: Always on top of everything) */}
@@ -139,7 +158,7 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
         <div
           key={`move-${idx}`}
           onPointerDown={(e) => {
-            e.stopPropagation(); 
+            e.stopPropagation();
             e.preventDefault();
             handleTargetInteraction(pos);
           }}
@@ -147,11 +166,11 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
           // Hit area is full square for easier tapping
           // Added 'group' for hover effects on children
           className="absolute z-30 flex items-center justify-center cursor-pointer group"
-          style={{ 
-              left: `${toViewPos(pos).x * 11.11}%`, 
-              top: `${toViewPos(pos).y * 10}%`,
-              width: '11.11%',
-              height: '10%'
+          style={{
+            left: `${toViewPos(pos).x * 11.11}%`,
+            top: `${toViewPos(pos).y * 10}%`,
+            width: '11.11%',
+            height: '10%'
           }}
         >
           {/* Hover Effect Circle: Matches Piece Size (85% height, aspect square) */}
@@ -164,16 +183,16 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
 
       {/* Previous Move Source Indicator (Visual Only) */}
       {lastMove && (
-        <div 
+        <div
           className="absolute z-0 flex items-center justify-center pointer-events-none"
-          style={{ 
-              left: `${toViewPos(lastMove.from).x * 11.11}%`, 
-              top: `${toViewPos(lastMove.from).y * 10}%`,
-              width: '11.11%',
-              height: '10%'
+          style={{
+            left: `${toViewPos(lastMove.from).x * 11.11}%`,
+            top: `${toViewPos(lastMove.from).y * 10}%`,
+            width: '11.11%',
+            height: '10%'
           }}
         >
-             <div className="w-full h-full border-2 border-dashed border-green-600/50 rounded-full scale-75"></div>
+          <div className="w-full h-full border-2 border-dashed border-green-600/50 rounded-full scale-75"></div>
         </div>
       )}
 
@@ -186,6 +205,8 @@ const Board: React.FC<BoardProps> = ({ pieces, turn, onMove, onGameOver, lastMov
           onClick={() => handlePieceInteraction(piece)}
           lastMoved={lastMove?.pieceId === piece.id}
           viewPosition={toViewPos(piece.position)}
+          rotate={isFlipped ? piece.color === PlayerColor.RED : piece.color === PlayerColor.BLACK}
+          isSlowMotion={slowMotionPieceId === piece.id}
         />
       ))}
     </div>
